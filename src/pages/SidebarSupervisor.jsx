@@ -220,7 +220,34 @@ const SidebarSupervisor = ({ mostrarSidebar, onClose }) => {
                         Estudiantes
                     </Link>
                     </li>
-
+                    <li>
+                  <Link
+                    to="/estadisticas-supervisor"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-[7px] text-[14px] font-semibold transition-colors ${
+                      location.pathname === '/estadisticas-supervisor'
+                        ? 'bg-[#011B4B] text-white'
+                        : 'bg-transparent text-gray-800 hover:bg-gray-100 hover:text-gray-800'
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#0cbba7"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 3v18h18" />
+                      <path d="M18 17V9" />
+                      <path d="M13 17V5" />
+                      <path d="M8 17v-3" />
+                    </svg>
+                    Estadísticas
+                  </Link>
+                </li>
             </ul>
           )}
         </div>

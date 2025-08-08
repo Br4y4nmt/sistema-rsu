@@ -8,16 +8,40 @@ const SidebarEstudiante = ({ mostrarSidebar, onClose }) => {
   const [foto, setFoto] = useState(null);
   const [mostrarSubmenu, setMostrarSubmenu] = useState(true);
   const [mostrarSubmenuModulo, setMostrarSubmenuModulo] = useState(false);
+  const [estadoActividad, setEstadoActividad] = useState(null);
   const location = useLocation();
 
-  useEffect(() => {
-    const fetchUsuario = async () => {
-      const user = await getUsuarioAutenticado();
-      setUsuario(user);
-      setFoto(localStorage.getItem('usuario_imagen'));
-    };
-    fetchUsuario();
-  }, []);
+ useEffect(() => {
+  const fetchUsuario = async () => {
+    const user = await getUsuarioAutenticado();
+    setUsuario(user);
+    setFoto(localStorage.getItem('usuario_imagen'));
+  };
+
+  const fetchEstadoActividad = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/actividades/estado/verificar`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEstadoActividad(data.estado); 
+      } else {
+        console.error('❌ Error al obtener estado de actividad');
+      }
+    } catch (error) {
+      console.error('❌ Error al conectar con el servidor', error);
+    }
+  };
+
+  fetchUsuario();
+  fetchEstadoActividad(); // 👈 llamado adicional
+}, []);
+
 
   const getNombreDividido = (nombre) => {
     const partes = nombre.toUpperCase().split(' ');
@@ -135,20 +159,29 @@ const SidebarEstudiante = ({ mostrarSidebar, onClose }) => {
         </Link>
         </li>
             <li>
+            {estadoActividad === 'TERMINADO' ? (
             <Link
-            to="/examen-estudiante"
-             className={`block rounded-lg px-3 py-[7px] text-[14px] font-semibold transition-colors ${
-            location.pathname === '/examen-estudiante'
-                ? 'bg-[#011B4B] text-white'
-                : 'text-gray-800'
-            }`}
-            style={{
-            fontFamily: '"Segoe UI", sans-serif',
-            color: location.pathname === '/examen-estudiante' ? 'white' : '#1f2937', 
-            }}
-        >
-            Examen
+              to="/examen-estudiante"
+              className={`block rounded-lg px-3 py-[7px] text-[14px] font-semibold transition-colors ${
+                location.pathname === '/examen-estudiante'
+                  ? 'bg-[#011B4B] text-white'
+                  : 'text-gray-800'
+              }`}
+              style={{
+                fontFamily: '"Segoe UI", sans-serif',
+                color: location.pathname === '/examen-estudiante' ? 'white' : '#1f2937',
+              }}
+            >
+              Examen
             </Link>
+          ) : (
+            <span
+              className="block rounded-lg px-3 py-[7px] text-[14px] font-semibold text-gray-400 cursor-not-allowed"
+              title="Completa tu actividad para habilitar el examen"
+            >
+              Examen
+            </span>
+          )}
             </li>
         </ul>
         )}
@@ -160,7 +193,7 @@ const SidebarEstudiante = ({ mostrarSidebar, onClose }) => {
     }`}
     onClick={() => setMostrarSubmenuModulo(!mostrarSubmenuModulo)}
   >
-    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0cbba7" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-component-icon lucide-component"><path d="M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"/><path d="M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z"/><path d="M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z"/><path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0cbba7" strokewidth="1" strokelinecap="round" stroke-linejoin="round" class="lucide lucide-component-icon lucide-component"><path d="M15.536 11.293a1 1 0 0 0 0 1.414l2.376 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"/><path d="M2.297 11.293a1 1 0 0 0 0 1.414l2.377 2.377a1 1 0 0 0 1.414 0l2.377-2.377a1 1 0 0 0 0-1.414L6.088 8.916a1 1 0 0 0-1.414 0z"/><path d="M8.916 17.912a1 1 0 0 0 0 1.415l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.415l-2.377-2.376a1 1 0 0 0-1.414 0z"/><path d="M8.916 4.674a1 1 0 0 0 0 1.414l2.377 2.376a1 1 0 0 0 1.414 0l2.377-2.376a1 1 0 0 0 0-1.414l-2.377-2.377a1 1 0 0 0-1.414 0z"/></svg>
     <span className="text-[16px] font-semibold text-gray-800">
       Módulo
     </span>

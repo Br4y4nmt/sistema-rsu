@@ -14,7 +14,7 @@ import ExamenSupervisor from './pages/ExamenSupervisor';
 import ActividadSupervisor from './pages/ActividadSupervisor';
 import LayoutEstudiante from './pages/LayoutEstudiante'; 
 import LayoutSupervisor from './pages/LayoutSupervisor'; 
-
+import EstadisticasSupervisor from './pages/EstadisticasSupervisor'; 
 function App() {
   return (
     <Router>
@@ -54,6 +54,26 @@ function App() {
             <PrivateRoute rolPermitido={2}>
               <LayoutSupervisor>
                 <EstudiantesSupervisor />
+              </LayoutSupervisor>
+            </PrivateRoute>
+          }
+        />
+         <Route
+          path="/examen-supervisor"
+          element={
+            <PrivateRoute rolPermitido={2}>
+              <LayoutSupervisor>
+                <ExamenSupervisor />
+              </LayoutSupervisor>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/estadisticas-supervisor"
+          element={
+            <PrivateRoute rolPermitido={2}>
+              <LayoutSupervisor>
+                <EstadisticasSupervisor />
               </LayoutSupervisor>
             </PrivateRoute>
           }

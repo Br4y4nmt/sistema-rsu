@@ -360,11 +360,14 @@ useEffect(() => {
         const uploadData = await uploadRes.json();
 
         if (uploadRes.ok) {
-          console.log('✅ Certificado subido:', uploadData.certificado);
-          setCertificadoSubido(true);
-        } else {
-          console.error('❌ Error al subir certificado:', uploadData.message);
-        }
+        console.log('✅ Certificado subido:', uploadData.certificado);
+        setCertificadoSubido(true);
+
+        const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+        setCertificadoUrl(`${baseUrl}/${uploadData.certificado.url_certificado}`);
+      } else {
+        console.error('❌ Error al subir certificado:', uploadData.message);
+      }
       }
     } catch (error) {
       console.error('❌ Error en verificación/generación de certificado:', error);
@@ -390,7 +393,7 @@ useEffect(() => {
   }
  if (resultadoExistente) {
  return (
-  <div className="max-w-2xl mx-auto mt-20 bg-white shadow-2xl rounded-3xl p-10 text-center border border-gray-100">
+<div className="max-w-2xl mx-auto mt-10 bg-white shadow-2xl rounded-3xl p-10 text-center border border-gray-100">
     <div className="flex justify-center items-center mb-6">
       <div className="bg-green-100 rounded-full p-4">
         <svg
