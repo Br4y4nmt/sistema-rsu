@@ -4,183 +4,173 @@ import 'tippy.js/dist/tippy.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
+// Normaliza base URL (evita dobles slashes)
+const BASE = import.meta.env.VITE_API_URL.replace(/\/$/, '');
 
 const DashboardEstudiante = () => {
   const [nombre, setNombre] = useState('');
   const [tipoSeleccionado, setTipoSeleccionado] = useState('');
-  const token = localStorage.getItem('token'); 
   const [tipoYaSeleccionado, setTipoYaSeleccionado] = useState(false);
   const [actividad, setActividad] = useState(null);
 
+  // Loading states
+  const [isSubmitting, setIsSubmitting] = useState(false);   // Confirmar tipo
+  const [isCheckingExam, setIsCheckingExam] = useState(false); // Ir al examen
+
+  const token = localStorage.getItem('token');
 
   const obtenerClaseEstado = (estado) => {
-  switch (estado) {
-    case 'NO INICIADO':
-      return 'bg-red-400 text-white';
-    case 'EN PROCESO':
-      return 'bg-yellow-400 text-white';
-    case 'TERMINADO':
-      return 'bg-green-500 text-white';
-    default:
-      return 'bg-gray-300 text-black';
-  }
-};
-const irAlExamen = async () => {
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/examen/verificar-acceso`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      // ✅ Acceso permitido
-      window.location.href = '/examen-estudiante'; 
-    } else {
-      // ❌ Acceso denegado
-      Swal.fire({
-        icon: 'warning',
-        title: 'Acceso denegado',
-        text: data.message || 'No tienes permiso para acceder al examen todavía.',
-      });
-    }
-  } catch (error) {
-    console.error('❌ Error al validar acceso al examen:', error.message);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Ocurrió un error al intentar acceder al examen.',
-    });
-  }
-};
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (!token) return;
-
-  const obtenerDatosActividad = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/actividades/actividad/detalles`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setActividad(data);
-      } else {
-        console.error('❌ Error al obtener actividad:', data.message);
-      }
-    } catch (error) {
-      console.error('❌ Error al obtener datos:', error.message);
+    switch (estado) {
+      case 'NO INICIADO':
+        return 'bg-red-400 text-white';
+      case 'EN PROCESO':
+        return 'bg-yellow-400 text-white';
+      case 'TERMINADO':
+        return 'bg-green-500 text-white';
+      default:
+        return 'bg-gray-300 text-black';
     }
   };
 
-  obtenerDatosActividad();
-}, []);
-
- useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (!token) return;
-
-  const verificarTipo = async () => {
+  // ---- API helpers ----
+  const fetchActividad = async (tk) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/actividades/actividad`, {
-        method: 'GET',
+      const res = await fetch(`${BASE}/actividades/actividad/detalles`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${tk}`
         }
       });
-
-      const data = await res.json();
-
-      if (res.ok && data.tipo) {
-        setTipoYaSeleccionado(true); 
-      } else {
-        setTipoYaSeleccionado(false); 
-      }
-    } catch (error) {
-      console.error('❌ Error al verificar tipo:', error.message);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
     }
   };
 
-  verificarTipo();
-}, []);
-
-
+  // Carga inicial (actividad + verificación de tipo)
   useEffect(() => {
-    const nombreGuardado = localStorage.getItem('usuario_nombre');
-    const idActividadGuardado = localStorage.getItem('actividad_id');
-    if (nombreGuardado) setNombre(nombreGuardado);
-    if (idActividadGuardado) setIdActividad(idActividadGuardado);
+    const tk = localStorage.getItem('token');
+    if (!tk) return;
+
+    (async () => {
+      const data = await fetchActividad(tk);
+      if (data) setActividad(data);
+
+      // Si tu backend NO devuelve "tipo" en /detalles, mantenemos esta verificación:
+      try {
+        const r = await fetch(`${BASE}/actividades/actividad`, {
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tk}` }
+        });
+        const j = await r.json().catch(() => ({}));
+        setTipoYaSeleccionado(r.ok && !!j?.tipo);
+      } catch {}
+    })();
   }, []);
 
-const confirmarTipoResiduo = async () => {
-  const tipoMap = {
-    organicos: 'RESIDUOS ORGÁNICOS',
-    inorganicos: 'RESIDUOS INORGÁNICOS'
+  // Nombre desde localStorage
+  useEffect(() => {
+    const nombreGuardado = localStorage.getItem('usuario_nombre');
+    if (nombreGuardado) setNombre(nombreGuardado);
+  }, []);
+
+  // Confirmar tipo con optimista + refetch
+  const confirmarTipoResiduo = async () => {
+    if (isSubmitting) return;
+
+    const tipoMap = {
+      organicos: 'RESIDUOS ORGÁNICOS',
+      inorganicos: 'RESIDUOS INORGÁNICOS'
+    };
+    const tipoMapped = tipoMap[tipoSeleccionado];
+
+    if (!tipoMapped) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Oops...',
+        text: 'Por favor seleccione una opción válida',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const res = await fetch(`${BASE}/actividades/actividad/tipo`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ tipo: tipoMapped })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error al actualizar');
+
+      // ✅ Actualización optimista instantánea
+      setTipoYaSeleccionado(true);
+      setActividad(prev => ({ ...(prev || {}), tipo: tipoMapped, estado: 'EN PROCESO' }));
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Éxito',
+        text: 'Tipo de residuo confirmado exitosamente.',
+        showConfirmButton: false,
+        timer: 1600,
+        timerProgressBar: true
+      });
+
+      // 🔄 Refetch para sincronizar datos reales
+      const nueva = await fetchActividad(token);
+      if (nueva) setActividad(nueva);
+
+    } catch (error) {
+      console.error('❌ Error al confirmar tipo:', error.message);
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Hubo un error al confirmar el tipo.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const tipoMapped = tipoMap[tipoSeleccionado];
-  if (!tipoMapped) {
-    Swal.fire({
-      icon: 'warning',
-      title: 'Oops...',
-      text: 'Por favor seleccione una opción válida',
-      confirmButtonText: 'Aceptar',
-      customClass: {
-        confirmButton: 'swal2-confirm-button'
+  const manejarCambioTipo = (e) => {
+    setTipoSeleccionado(e.target.value);
+  };
+
+  // Botón "Ir al examen" con bloqueo/spinner
+  const irAlExamen = async () => {
+    if (isCheckingExam) return;
+
+    try {
+      setIsCheckingExam(true);
+
+      const res = await fetch(`${BASE}/examen/verificar-acceso`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        window.location.href = '/examen-estudiante';
+      } else {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Acceso denegado',
+          text: data.message || 'No tienes permiso para acceder al examen todavía.',
+        });
       }
-    });
-    return;
-  }
-
-  const token = localStorage.getItem('token');
-
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/actividades/actividad/tipo`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ tipo: tipoMapped })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || 'Error al actualizar');
-
-    Swal.fire({
-      icon: 'success',
-      title: 'Éxito',
-      text: 'Tipo de residuo confirmado exitosamente.',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    }).then(() => {
-      setTipoYaSeleccionado(true);
-    });
-
-  } catch (error) {
-    console.error('❌ Error al confirmar tipo:', error.message);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error',
-      text: 'Hubo un error al confirmar el tipo.',
-    });
-  }
-};
-
-const manejarCambioTipo = (e) => {
-  setTipoSeleccionado(e.target.value);
-};
+    } catch (error) {
+      console.error('❌ Error al validar acceso al examen:', error.message);
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Ocurrió un error al intentar acceder al examen.' });
+    } finally {
+      setIsCheckingExam(false);
+    }
+  };
 
 
 return (
@@ -359,15 +349,31 @@ className="w-full md:w-[380px] lg:w-[420px] bg-white border border-gray-300 text
               <div className="flex justify-center mt-6">
                 <button
                   onClick={confirmarTipoResiduo}
-                  className="px-6 py-2 rounded-md text-white text-sm font-medium transition-all duration-300 transform hover:-translate-y-1"
+                  disabled={isSubmitting}
+                  aria-busy={isSubmitting}
+                  className={`px-6 py-2 rounded-md text-white text-sm font-medium transition-all duration-300
+                              transform ${isSubmitting ? '' : 'hover:-translate-y-1'}
+                              ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}
+                            `}
                   style={{
                     backgroundColor: '#2EBAA1',
                     fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = '#26A78D')}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#2EBAA1')}
+                  onMouseEnter={(e) => { if (!isSubmitting) e.target.style.backgroundColor = '#26A78D'; }}
+                  onMouseLeave={(e) => { if (!isSubmitting) e.target.style.backgroundColor = '#2EBAA1'; }}
                 >
-                  Confirmar
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                      </svg>
+                      Procesando...
+                    </span>
+                  ) : (
+                    'Confirmar'
+                  )}
                 </button>
               </div>
             </div>

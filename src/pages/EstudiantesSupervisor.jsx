@@ -65,15 +65,16 @@ const EstudiantesSupervisor = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-100 px-6 py-10">
-      <div className="max-w-7xl mx-auto bg-white shadow-lg rounded-xl p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div className="max-w-7xl mx-auto bg-white shadow-lg rounded-xl p-6 overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 flex-wrap">
           <h1 className="text-2xl font-bold text-[#011B4B]">Estudiantes Registrados</h1>
 
           <div className="w-full md:w-72">
+            <div className="min-w-[220px] w-full md:w-64">
             <select
               value={filtroPrograma}
               onChange={(e) => setFiltroPrograma(e.target.value)}
-              className="border border-teal-500 rounded-lg px-4 py-2 text-sm text-gray-800"
+              className="w-full border border-teal-500 rounded-lg px-4 py-2 text-sm text-gray-800"
             >
               <option value="">Todos los programas</option>
               {programasAcademicos.map((programa) => (
@@ -82,6 +83,7 @@ const EstudiantesSupervisor = () => {
                 </option>
               ))}
             </select>
+          </div>
           </div>
         </div>
 
