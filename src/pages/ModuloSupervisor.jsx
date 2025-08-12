@@ -232,7 +232,7 @@ useEffect(() => {
                <td className="px-4 py-3">
                 {modulo.archivo ? (
                        <a
-                  href={`http://localhost:3000/uploads/${modulo.archivo}`}
+                  href={`${import.meta.env.VITE_API_URL}/uploads/${modulo.archivo}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#e0ecf7] text-[#011B4B] text-sm font-medium rounded-md shadow-sm hover:bg-[#d3e3f2] transition-colors"
@@ -315,14 +315,14 @@ useEffect(() => {
             type="file"
             accept="application/pdf"
             onChange={(e) => setArchivo(e.target.files[0])}
-            disabled={modoEdicion} // 👈 Esto evita que suban uno nuevo en edición
+            disabled={modoEdicion} 
             className={`w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#011B4B] ${modoEdicion ? 'bg-gray-100 cursor-not-allowed' : ''}`}
             />
             {modoEdicion && moduloSeleccionado?.archivo && (
         <p className="text-sm text-gray-500 mt-1">
             Archivo actual:{' '}
              <a
-                href={`http://localhost:3000/uploads/${moduloSeleccionado.archivo}`}
+                href={`${import.meta.env.VITE_API_URL}/uploads/${moduloSeleccionado.archivo}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 underline"

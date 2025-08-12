@@ -388,7 +388,7 @@ const handleSubmit = async () => {
           {evidenciasActividad.map((evidencia) => (
             <div key={evidencia.id} className="flex gap-4 bg-gray-50 border border-gray-200 rounded-xl shadow-sm p-4">
               <img
-                src={`http://localhost:3000/uploads/${evidencia.evidencia_url}`}
+                src={`${import.meta.env.VITE_API_URL}/uploads/${evidencia.evidencia_url}`}
                 alt="Evidencia"
                 className="h-24 w-24 object-cover rounded-lg border"
               />

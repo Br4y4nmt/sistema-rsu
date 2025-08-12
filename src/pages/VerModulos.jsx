@@ -79,7 +79,7 @@ const VerModulos = () => {
                   <td className="px-4 py-4">{modulo.fecha_ingreso || '30/07/2025'}</td>
                   <td className="px-4 py-4">
                   <a
-                  href={`http://localhost:3000/uploads/${modulo.archivo}`}
+                  href={`${import.meta.env.VITE_API_URL}/uploads/${modulo.archivo}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-sm rounded-xl border border-gray-400 hover:bg-gray-300/60 px-2 py-0.5"
